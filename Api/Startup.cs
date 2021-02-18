@@ -16,12 +16,27 @@ namespace Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IConfiguration _config;
+        public Startup(IConfiguration config)
         {
-            Configuration = configuration;
+            _config = config;
         }
 
-        public IConfiguration Configuration { get; }
+        public void ConfigureDevelopmentServices(IServiceCollection services)
+        {
+            services.AddDbContext<ApplicationDbContext>(x =>
+                x.UseSqlite(_config.GetConnectionString("Sqlite")));
+
+            ConfigureServices(services);
+        }
+
+        public void ConfigureProductionServices(IServiceCollection services)
+        {
+            services.AddDbContext<ApplicationDbContext>(x =>
+                x.UseSqlite(_config.GetConnectionString("DefaultConnection")));
+
+            ConfigureServices(services);
+        }
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -31,8 +46,6 @@ namespace Api
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
             });
-            services.AddDbContext<ApplicationDbContext>(x => 
-                    x.UseSqlite(Configuration.GetConnectionString("Sqlite")));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
